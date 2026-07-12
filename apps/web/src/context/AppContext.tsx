@@ -184,11 +184,11 @@ const INITIAL_DEPARTMENTS: Department[] = [
 
 const INITIAL_EMPLOYEES: Employee[] = [
   { id: "emp-1", name: "Abhinav Tyagi", email: "admin@assetflow.com", departmentId: "dept-2", role: "Admin", status: "Active", password: "password123" },
-  { id: "emp-2", name: "Priya Shah", email: "priya.shah@assetflow.com", departmentId: "dept-1", role: "Department Head", status: "Active", password: "password123" },
-  { id: "emp-3", name: "Raj Patel", email: "raj.patel@assetflow.com", departmentId: "dept-2", role: "Department Head", status: "Active", password: "password123" },
-  { id: "emp-4", name: "Sarah Connor", email: "sarah.c@assetflow.com", departmentId: "dept-2", role: "Asset Manager", status: "Active", password: "password123" },
-  { id: "emp-5", name: "Sneha Rao", email: "sneha.rao@assetflow.com", departmentId: "dept-3", role: "Department Head", status: "Active", password: "password123" },
-  { id: "emp-6", name: "Amit Verma", email: "amit.verma@assetflow.com", departmentId: "dept-4", role: "Department Head", status: "Active", password: "password123" },
+  { id: "emp-2", name: "Aditi Tyagi", email: "tyagiaditi027@gmail.com", departmentId: "dept-2", role: "Admin", status: "Active", password: "password123" },
+  { id: "emp-3", name: "Priya Shah", email: "priya.shah@assetflow.com", departmentId: "dept-1", role: "Employee", status: "Active", password: "password123" },
+  { id: "emp-4", name: "Rahul Verma", email: "rahul.v@assetflow.com", departmentId: "dept-3", role: "Department Head", status: "Active", password: "password123" },
+  { id: "emp-5", name: "Sneha Reddy", email: "sneha.reddy@assetflow.com", departmentId: "dept-4", role: "Asset Manager", status: "Active", password: "password123" },
+  { id: "emp-6", name: "Amit Kumar", email: "amit.k@assetflow.com", departmentId: "dept-1", role: "Employee", status: "Inactive", password: "password123" },
   { id: "emp-7", name: "Raj Malhotra", email: "raj.m@assetflow.com", departmentId: "dept-1", role: "Employee", status: "Active", password: "password123" },
   { id: "emp-8", name: "Priya Sen", email: "priya.sen@assetflow.com", departmentId: "dept-3", role: "Employee", status: "Active", password: "password123" },
 ];
@@ -1467,11 +1467,12 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const resetPassword = (email: string, newPassword: string): boolean => {
-    const existing = employees.find((e) => e.email === email);
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = employees.find((e) => e.email.trim().toLowerCase() === normalizedEmail);
     if (!existing) return false;
     
     setEmployees((prev) => {
-      const updated = prev.map((e) => (e.email === email ? { ...e, password: newPassword } : e));
+      const updated = prev.map((e) => (e.email.trim().toLowerCase() === normalizedEmail ? { ...e, password: newPassword } : e));
       saveState("af_employees", updated);
       return updated;
     });

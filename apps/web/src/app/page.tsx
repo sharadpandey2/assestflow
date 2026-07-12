@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp, Employee } from "@/context/AppContext";
+import { api, setAuthToken } from "@/services/api";
 import { Shield, ArrowRight, Sparkles, Mail, Lock, User, KeyRound } from "lucide-react";
 
 export default function LoginPage() {
@@ -40,16 +41,17 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     if (viewState === "login") {
-      const user = employees.find((emp) => emp.email === email);
-      if (!user) {
-        setError("Account not found. Please check your email.");
-      } else if (user.password !== password && user.password !== undefined) {
-        setError("Invalid credentials. Please try again.");
-      } else if (user.status !== "Active") {
-        setError("Your account is currently inactive. Contact an Administrator.");
-      } else {
-        setCurrentUser(user);
-        router.push("/dashboard");
+      try {
+        const res = await api.login(email, password);
+        if (res && res.access_token) {
+          setAuthToken(res.access_token);
+          // Redirect with full page reload so AppContext syncs with backend using the new token
+          window.location.href = "/dashboard";
+        } else {
+          setError("Invalid credentials. Please try again.");
+        }
+      } catch (err: any) {
+        setError(err.message || "Login failed. Please check your credentials.");
       }
     } else if (viewState === "signup") {
       if (!name || !email || !password) {
@@ -57,37 +59,29 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
-      const existingUser = employees.find((emp) => emp.email === email);
-      if (existingUser) {
-        setError("An account with this email already exists.");
-      } else {
-        const defaultDept = "dept-1"; 
-        addEmployee({
-          name,
-          email,
-          password,
-          departmentId: defaultDept,
-          role: "Employee",
-          status: "Active",
-        });
+      const normalizedEmail = email.trim().toLowerCase();
+      try {
+        // Since we don't have a checkEmail endpoint, we'll just attempt signup
+        await api.signup(name, email, password);
         
-        const newUser = {
-          id: `emp-${Date.now()}`,
-          name,
-          email,
-          password,
-          departmentId: defaultDept,
-          role: "Employee" as const,
-          status: "Active" as const,
-        };
-        setCurrentUser(newUser);
-        router.push("/dashboard");
+        // Auto-login after signup
+        const loginRes = await api.login(email, password);
+        if (loginRes && loginRes.access_token) {
+          setAuthToken(loginRes.access_token);
+          window.location.href = "/dashboard";
+        } else {
+          setViewState("login");
+          setSuccessMsg("Account created! Please log in.");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to create account. Email might already exist.");
       }
     } else if (viewState === "forgot_email") {
       if (!email) {
         setError("Please enter your email address.");
       } else {
-        const userExists = employees.find((emp) => emp.email === email);
+        const normalizedEmail = email.trim().toLowerCase();
+        const userExists = employees.find((emp) => emp.email.trim().toLowerCase() === normalizedEmail);
         if (userExists) {
           try {
             // Call the backend to actually send the email via Nodemailer
