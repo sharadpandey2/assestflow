@@ -66,6 +66,8 @@ export const api = {
   getAllocation: (id: string) => request(`/allocations/${id}`),
   createAllocation: (data: any) => request('/allocations', { method: 'POST', body: JSON.stringify(data) }),
   updateAllocation: (id: string, data: any) => request(`/allocations/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  createTransferRequest: (data: any) => request('/allocations/transfer', { method: 'POST', body: JSON.stringify(data) }),
+  resolveTransferRequest: (id: string, status: string, resolvedByUserId: string) => request(`/allocations/transfer/${id}`, { method: 'PATCH', body: JSON.stringify({ status, resolvedByUserId }) }),
 
   // Departments
   getDepartments: () => request('/departments'),
@@ -80,16 +82,18 @@ export const api = {
   // Maintenance
   getMaintenanceRequests: () => request('/maintenance'),
   createMaintenanceRequest: (data: any) => request('/maintenance', { method: 'POST', body: JSON.stringify(data) }),
-  updateMaintenanceRequest: (id: string, data: any) => request(`/maintenance/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  updateMaintenanceStatus: (id: string, status: string, resolvedByUserId: string) => request(`/maintenance/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, resolvedByUserId }) }),
 
   // Audits
   getAudits: () => request('/audits'),
   createAudit: (data: any) => request('/audits', { method: 'POST', body: JSON.stringify(data) }),
-  updateAudit: (id: string, data: any) => request(`/audits/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  submitAuditRecord: (data: any) => request('/audits/records', { method: 'POST', body: JSON.stringify(data) }),
+  closeAuditCycle: (id: string) => request(`/audits/${id}/close`, { method: 'PATCH' }),
 
   // Bookings
   getBookings: () => request('/bookings'),
   createBooking: (data: any) => request('/bookings', { method: 'POST', body: JSON.stringify(data) }),
+  cancelBooking: (id: string) => request(`/bookings/${id}/cancel`, { method: 'PATCH' }),
 
   // Notifications
   getNotifications: () => request('/notifications'),

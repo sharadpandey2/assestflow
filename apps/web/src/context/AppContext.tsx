@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { api, getAuthToken } from "@/services/api";
 
 export type Role = "Admin" | "Asset Manager" | "Department Head" | "Employee";
 
@@ -447,10 +448,131 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [notifications, setNotifications] = useState<SystemNotification[]>(INITIAL_NOTIFICATIONS);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY);
 
-  // Load from localStorage on mount
+  const syncWithBackend = async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const profile = await api.getProfile();
+      if (profile) setCurrentUser(profile);
+
+      const backendAssets = await api.getAssets();
+      if (backendAssets && Array.isArray(backendAssets)) {
+        setAssets(backendAssets.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          categoryId: a.categoryId,
+          serialNumber: a.serialNumber || "",
+          acquisitionDate: a.acquisitionDate || "",
+          acquisitionCost: Number(a.acquisitionCost) || 0,
+          condition: a.condition as any,
+          location: a.location,
+          photoUrl: a.photoUrl || undefined,
+          isSharedBookable: a.isSharedBookable,
+          status: a.status as any,
+          customData: a.customAttributes || {},
+        })));
+      }
+
+      const backendCats = await api.getCategories();
+      if (backendCats && Array.isArray(backendCats)) {
+        setCategories(backendCats.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          fields: c.customFieldsSchema || [],
+        })));
+      }
+
+      const backendUsers = await api.getUsers();
+      if (backendUsers && Array.isArray(backendUsers)) {
+        setEmployees(backendUsers.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          departmentId: u.departmentId || "",
+          role: u.role,
+          status: u.status,
+        })));
+      }
+
+      const backendDepts = await api.getDepartments();
+      if (backendDepts && Array.isArray(backendDepts)) {
+        setDepartments(backendDepts.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          headId: d.headId || "",
+          parentDepartmentId: d.parentDepartmentId || undefined,
+          status: d.status,
+        })));
+      }
+
+      const backendAllocs = await api.getAllocations();
+      if (backendAllocs && Array.isArray(backendAllocs)) {
+        setAllocations(backendAllocs.map((al: any) => ({
+          id: al.id,
+          assetId: al.assetId,
+          allocatedToType: al.assigneeType === 'User' ? 'Employee' : 'Department',
+          targetId: al.assigneeId,
+          allocationDate: al.createdAt ? new Date(al.createdAt).toISOString().split('T')[0] : "",
+          expectedReturnDate: al.expectedReturnDate || undefined,
+          actualReturnDate: al.returnedAt ? new Date(al.returnedAt).toISOString().split('T')[0] : undefined,
+          conditionOnReturn: al.returnConditionNotes || undefined,
+          status: (al.status === 'Active' ? 'Active' : al.status === 'Transferred' ? 'Transferred' : 'Returned') as any,
+        })));
+      }
+
+      const backendBookings = await api.getBookings();
+      if (backendBookings && Array.isArray(backendBookings)) {
+        setBookings(backendBookings.map((b: any) => ({
+          id: b.id,
+          assetId: b.assetId,
+          bookedById: b.bookerId || "",
+          startTime: b.startTime,
+          endTime: b.endTime,
+          status: b.status as any,
+        })));
+      }
+
+      const backendMaint = await api.getMaintenanceRequests();
+      if (backendMaint && Array.isArray(backendMaint)) {
+        setMaintenanceRequests(backendMaint.map((m: any) => ({
+          id: m.id,
+          assetId: m.assetId,
+          raisedById: m.requesterId,
+          description: m.issueDescription,
+          priority: m.priority,
+          photoUrl: m.photoUrl || undefined,
+          status: m.status,
+          assignedTo: m.assignedTechnician || undefined,
+          createdAt: m.createdAt || new Date().toISOString(),
+        })));
+      }
+
+      const backendAudits = await api.getAudits();
+      if (backendAudits && Array.isArray(backendAudits)) {
+        setAuditCycles(backendAudits.map((au: any) => ({
+          id: au.id,
+          name: au.name,
+          scopeType: au.scopeType === 'Department' ? 'Department' : au.scopeType === 'Location' ? 'Location' : 'Global',
+          scopeValue: au.scopeId || "",
+          startDate: au.startDate,
+          endDate: au.endDate,
+          status: au.status === 'Open' ? 'Active' : 'Closed',
+          auditorIds: au.auditors || [],
+          records: au.records || {},
+        })));
+      }
+    } catch (err) {
+      console.error("Error syncing with backend:", err);
+    }
+  };
+
+  // Load from localStorage on mount or sync with backend
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
-    if (typeof window !== "undefined") {
+    const token = getAuthToken();
+    if (token) {
+      syncWithBackend();
+    } else if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("af_user");
       const storedEmployees = localStorage.getItem("af_employees");
       const storedDepts = localStorage.getItem("af_departments");
@@ -611,8 +733,29 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Asset Management
   // ----------------------------------------------------
-  const registerAsset = (assetData: Omit<Asset, "id" | "status">) => {
-    // Generate simple tag: AF-0XXXX
+  const registerAsset = async (assetData: Omit<Asset, "id" | "status">) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createAsset({
+          assetTag: `AF-0${assets.length + 120}`,
+          name: assetData.name,
+          categoryId: assetData.categoryId,
+          serialNumber: assetData.serialNumber,
+          acquisitionDate: assetData.acquisitionDate,
+          acquisitionCost: String(assetData.acquisitionCost),
+          condition: assetData.condition,
+          location: assetData.location,
+          isSharedBookable: assetData.isSharedBookable,
+          customAttributes: assetData.customData,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error creating asset in backend:", err);
+      }
+    }
+    // Fallback
     const nextNum = assets.length + 120; // offset to make it look realistic
     const nextTag = `AF-0${nextNum}`;
     const newAsset: Asset = {
@@ -628,7 +771,29 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     logActivity("Register Asset", `Registered asset ${newAsset.id} - ${newAsset.name}`);
   };
 
-  const editAsset = (id: string, data: Partial<Asset>) => {
+  const editAsset = async (id: string, data: Partial<Asset>) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.updateAsset(id, {
+          name: data.name,
+          categoryId: data.categoryId,
+          serialNumber: data.serialNumber,
+          acquisitionDate: data.acquisitionDate,
+          acquisitionCost: data.acquisitionCost ? String(data.acquisitionCost) : undefined,
+          condition: data.condition,
+          location: data.location,
+          isSharedBookable: data.isSharedBookable,
+          customAttributes: data.customData,
+          status: data.status,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error editing asset in backend:", err);
+      }
+    }
+    // Fallback
     setAssets((prev) => {
       const updated = prev.map((a) => (a.id === id ? { ...a, ...data } : a));
       saveState("af_assets", updated);
@@ -860,7 +1025,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return { success: true };
   };
 
-  const cancelBooking = (bookingId: string) => {
+  const cancelBooking = async (bookingId: string) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.cancelBooking(bookingId);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error cancelling booking in backend:", err);
+      }
+    }
+    // Fallback
     setBookings((prev) => {
       const updated = prev.map((b) => (b.id === bookingId ? { ...b, status: "Cancelled" as const } : b));
       saveState("af_bookings", updated);
@@ -872,7 +1048,24 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Maintenance requests
   // ----------------------------------------------------
-  const raiseMaintenance = (maintData: Omit<MaintenanceRequest, "id" | "status" | "createdAt">) => {
+  const raiseMaintenance = async (maintData: Omit<MaintenanceRequest, "id" | "status" | "createdAt">) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createMaintenanceRequest({
+          assetId: maintData.assetId,
+          issueDescription: maintData.description,
+          priority: maintData.priority,
+          photoUrl: maintData.photoUrl,
+          requesterId: maintData.raisedById,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error raising maintenance in backend:", err);
+      }
+    }
+    // Fallback
     const newReq: MaintenanceRequest = {
       ...maintData,
       id: `maint-${Date.now()}`,
@@ -891,7 +1084,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     addNotification("Maintenance Request Raised", `Issue reported for ${assetName}. Pending approval.`, "info");
   };
 
-  const updateMaintenanceStatus = (requestId: string, status: MaintenanceRequest["status"], technician?: string) => {
+  const updateMaintenanceStatus = async (requestId: string, status: MaintenanceRequest["status"], technician?: string) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.updateMaintenanceStatus(requestId, status, currentUser.id);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error updating maintenance status in backend:", err);
+      }
+    }
+    // Fallback
     let affectedAssetId = "";
 
     setMaintenanceRequests((prev) => {
@@ -938,7 +1142,23 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Audit Verification Cycles
   // ----------------------------------------------------
-  const createAuditCycle = (auditData: Omit<AuditCycle, "id" | "status" | "records">) => {
+  const createAuditCycle = async (auditData: Omit<AuditCycle, "id" | "status" | "records">) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createAudit({
+          name: auditData.name,
+          startDate: auditData.startDate,
+          endDate: auditData.endDate,
+          departmentScopeId: auditData.scopeType === "Department" ? auditData.scopeValue : undefined,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error creating audit cycle in backend:", err);
+      }
+    }
+    // Fallback
     const newCycle: AuditCycle = {
       ...auditData,
       id: `audit-${Date.now()}`,
@@ -956,12 +1176,29 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     addNotification("Audit Cycle Initiated", `Audit "${auditData.name}" is now live.`, "info");
   };
 
-  const submitAuditRecord = (
+  const submitAuditRecord = async (
     cycleId: string,
     assetId: string,
     verification: "Verified" | "Missing" | "Damaged",
     notes: string
   ) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.submitAuditRecord({
+          auditId: cycleId,
+          assetId,
+          auditorUserId: currentUser.id,
+          status: verification,
+          notes,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error submitting audit record in backend:", err);
+      }
+    }
+    // Fallback
     setAuditCycles((prev) => {
       const updated = prev.map((cycle) => {
         if (cycle.id === cycleId) {
@@ -987,7 +1224,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const closeAuditCycle = (cycleId: string) => {
+  const closeAuditCycle = async (cycleId: string) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.closeAuditCycle(cycleId);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error closing audit cycle in backend:", err);
+      }
+    }
+    // Fallback
     let cycle: AuditCycle | undefined;
 
     setAuditCycles((prev) => {
@@ -1029,7 +1277,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     addNotification("Audit Cycle Closed", `Audit "${cycle.name}" closed. Missing assets marked as Lost.`, "success");
   };
 
-  const markNotificationsRead = () => {
+  const markNotificationsRead = async () => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.markNotificationsRead();
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error marking notifications read in backend:", err);
+      }
+    }
+    // Fallback
     setNotifications((prev) => {
       const updated = prev.map((n) => ({ ...n, read: true }));
       saveState("af_notifications", updated);
