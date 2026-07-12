@@ -1354,23 +1354,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     verification: "Verified" | "Missing" | "Damaged",
     notes: string
   ) => {
-    const token = getAuthToken();
-    if (token) {
-      try {
-        await api.submitAuditRecord({
-          auditId: cycleId,
-          assetId,
-          auditorUserId: currentUser.id,
-          status: verification,
-          notes,
-        });
-        await syncWithBackend();
-        return;
-      } catch (err) {
-        console.error("Error submitting audit record in backend:", err);
-      }
-    }
-    // Fallback
+    // Optimistic UI Update: update state immediately
     setAuditCycles((prev) => {
       const updated = prev.map((cycle) => {
         if (cycle.id === cycleId) {
@@ -1393,6 +1377,24 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (verification === "Missing" || verification === "Damaged") {
       addNotification("Audit Discrepancy Flagged", `Asset ${assetId} flagged as ${verification} during audit.`, "warning");
+    }
+
+    // Backend sync in the background
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.submitAuditRecord({
+          auditId: cycleId,
+          assetId,
+          auditorUserId: currentUser.id,
+          status: verification,
+          notes,
+        });
+        // Optionally trigger a background sync without blocking
+        syncWithBackend().catch(console.error);
+      } catch (err) {
+        console.error("Error submitting audit record in backend:", err);
+      }
     }
   };
 

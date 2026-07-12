@@ -114,8 +114,8 @@ export default function AuditsPage() {
         
         const alloc = allocations.find(a => a.assetId === asset.id && a.status === "Active");
         if (alloc) {
-           return (alloc.assigneeType === "User" && deptEmpIds.includes(alloc.assigneeId)) || 
-                  (alloc.assigneeType === "Department" && alloc.assigneeId === cycle.scopeValue);
+           return (alloc.allocatedToType === "Employee" && deptEmpIds.includes(alloc.targetId)) || 
+                  (alloc.allocatedToType === "Department" && alloc.targetId === cycle.scopeValue);
         }
         return false;
       });

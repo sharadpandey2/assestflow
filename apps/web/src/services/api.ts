@@ -32,6 +32,7 @@ async function request(path: string, options: RequestInit = {}) {
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    cache: 'no-store',
     ...options,
     headers,
   });

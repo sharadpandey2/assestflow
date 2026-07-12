@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/database.module';
-import { auditCycles, auditRecords, assets } from '@asset-flow/database';
+import { auditCycles, auditRecords, assets, auditAuditors } from '@asset-flow/database';
 import { eq, inArray, and } from 'drizzle-orm';
 import {
   CreateAuditCycleDto,
@@ -12,11 +12,33 @@ export class AuditsService {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async getAllCycles() {
-    // Basic implementation; AppContext expects au.records so we should fetch it ideally, 
-    // but the frontend handles if it's not present (au.records || {})
-    return this.db.select().from(auditCycles);
-  }
+    const cycles = await this.db.select().from(auditCycles);
+    const records = await this.db.select().from(auditRecords);
+    const auditors = await this.db.select().from(auditAuditors);
 
+    return cycles.map((cycle: any) => {
+      const cycleAuditors = auditors
+        .filter((a: any) => a.auditCycleId === cycle.id)
+        .map((a: any) => a.auditorId);
+        
+      const cycleRecordsList = records.filter((r: any) => r.auditCycleId === cycle.id);
+      const recordsMap: Record<string, any> = {};
+      for (const r of cycleRecordsList) {
+        recordsMap[r.assetId] = {
+          status: r.status,
+          notes: r.notes,
+          auditedAt: r.loggedAt,
+          auditedBy: r.auditorId,
+        };
+      }
+
+      return {
+        ...cycle,
+        auditors: cycleAuditors,
+        records: recordsMap,
+      };
+    });
+  }
 
   async createCycle(createAuditCycleDto: CreateAuditCycleDto) {
     const scopeType = createAuditCycleDto.departmentScopeId
