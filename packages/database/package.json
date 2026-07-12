@@ -1,0 +1,19 @@
+{
+  "name": "@asset-flow/database",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "drizzle-orm": "^0.33.0",
+    "@neondatabase/serverless": "^0.9.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.24.2",
+    "@asset-flow/typescript-config": "workspace:*",
+    "@asset-flow/eslint-config": "workspace:*"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
+  }
+}
