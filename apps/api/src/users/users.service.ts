@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { users } from '@asset-flow/database';
 import { eq } from 'drizzle-orm';
-import { UpdateUserRoleDto } from './dto/update-user.dto';
+import { UpdateUserRoleDto, UpdateUserStatusDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -27,6 +27,23 @@ export class UsersService {
       .update(users)
       .set({
         role: updateUserRoleDto.role,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return updatedUser;
+  }
+
+  async updateStatus(id: string, updateUserStatusDto: UpdateUserStatusDto) {
+    const [updatedUser] = await this.db
+      .update(users)
+      .set({
+        status: updateUserStatusDto.status,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))

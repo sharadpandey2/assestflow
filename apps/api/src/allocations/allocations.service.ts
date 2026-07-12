@@ -18,7 +18,7 @@ export class AllocationsService {
       .where(
         and(
           eq(allocations.assetId, createAllocationDto.assetId),
-          isNull(allocations.actualReturnDate)
+          eq(allocations.status, 'Active')
         )
       );
 
@@ -28,12 +28,24 @@ export class AllocationsService {
       );
     }
 
+    const assigneeType = createAllocationDto.assignedUserId ? 'User' : 'Department';
+    const assigneeId = createAllocationDto.assignedUserId || createAllocationDto.assignedDepartmentId;
+
+    if (!assigneeId) {
+      throw new ConflictException('Assignee ID is required (either assignedUserId or assignedDepartmentId)');
+    }
+
     // 2. Insert new allocation
     const [newAllocation] = await this.db
       .insert(allocations)
       .values({
-        ...createAllocationDto,
-        allocationDate: new Date(),
+        assetId: createAllocationDto.assetId,
+        assigneeType,
+        assigneeId,
+        assignedById: 'emp-1', // Default system admin ID or system-wide default during seed
+        expectedReturnDate: createAllocationDto.expectedReturnDate,
+        status: 'Active',
+        createdAt: new Date(),
       })
       .returning();
 
@@ -47,29 +59,83 @@ export class AllocationsService {
   }
 
   async createTransferRequest(createTransferDto: CreateTransferRequestDto) {
+    // Find current holder
+    const [activeAlloc] = await this.db
+      .select()
+      .from(allocations)
+      .where(
+        and(
+          eq(allocations.assetId, createTransferDto.assetId),
+          eq(allocations.status, 'Active')
+        )
+      );
+
+    if (!activeAlloc) {
+      throw new NotFoundException('Asset is not currently allocated. Cannot request a transfer.');
+    }
+
     const [request] = await this.db
       .insert(transferRequests)
       .values({
-        ...createTransferDto,
+        assetId: createTransferDto.assetId,
+        requesterId: createTransferDto.requestedByUserId,
+        currentHolderId: activeAlloc.assigneeId,
         status: 'Requested',
-        requestDate: new Date(),
+        createdAt: new Date(),
       })
       .returning();
     return request;
   }
 
   async resolveTransferRequest(id: string, status: 'Approved' | 'Rejected', resolvedByUserId: string) {
+    const [req] = await this.db
+      .select()
+      .from(transferRequests)
+      .where(eq(transferRequests.id, id));
+
+    if (!req) {
+      throw new NotFoundException('Transfer request not found');
+    }
+
     const [updated] = await this.db
       .update(transferRequests)
       .set({
         status,
-        resolvedByUserId,
-        resolvedDate: new Date(),
+        approvedById: resolvedByUserId,
+        resolvedAt: new Date(),
       })
       .where(eq(transferRequests.id, id))
       .returning();
 
-    if (!updated) throw new NotFoundException('Transfer request not found');
+    if (status === 'Approved') {
+      // 1. Terminate old allocation
+      await this.db
+        .update(allocations)
+        .set({
+          status: 'Returned',
+          returnedAt: new Date(),
+          returnConditionNotes: 'Transferred to another user',
+        })
+        .where(
+          and(
+            eq(allocations.assetId, req.assetId),
+            eq(allocations.status, 'Active')
+          )
+        );
+
+      // 2. Create new allocation for requester
+      await this.db
+        .insert(allocations)
+        .values({
+          assetId: req.assetId,
+          assigneeType: 'User',
+          assigneeId: req.requesterId,
+          assignedById: resolvedByUserId,
+          status: 'Active',
+          createdAt: new Date(),
+        });
+    }
+
     return updated;
   }
 }

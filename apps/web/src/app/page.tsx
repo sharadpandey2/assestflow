@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp, Employee } from "@/context/AppContext";
+import { api, setAuthToken } from "@/services/api";
 import { Shield, Key, ArrowRight, UserPlus, Users, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
@@ -16,45 +17,33 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
 
-  const handleCredentialsSubmit = (e: React.FormEvent) => {
+  const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (isLogin) {
-      // Find matching employee by email
-      const matched = employees.find((emp) => emp.email.toLowerCase() === email.toLowerCase());
-      if (matched) {
-        setCurrentUser(matched);
+      try {
+        const res = await api.login(email, password);
+        setAuthToken(res.accessToken);
+        setCurrentUser(res.user);
         router.push("/dashboard");
-      } else {
-        setError("Invalid email. For testing, choose one of the quick profiles below!");
+      } catch (err: any) {
+        setError(err.message || "Invalid credentials. Please try again.");
       }
     } else {
-      // Signup: Creates an Employee account only (no role selection)
-      if (!name || !email) {
-        setError("Please enter your name and email.");
+      if (!name || !email || !password) {
+        setError("Please enter your name, email, and password.");
         return;
       }
-      
-      const emailExists = employees.some((emp) => emp.email.toLowerCase() === email.toLowerCase());
-      if (emailExists) {
-        setError("This email is already registered.");
-        return;
+      try {
+        await api.signup(name, email, password);
+        const res = await api.login(email, password);
+        setAuthToken(res.accessToken);
+        setCurrentUser(res.user);
+        router.push("/dashboard");
+      } catch (err: any) {
+        setError(err.message || "Signup failed. Email may already be registered.");
       }
-
-      const newEmployee = {
-        name,
-        email,
-        departmentId: "dept-1", // Defaults to IT for testing
-        role: "Employee" as const, // Hardcoded role, no elevation
-        status: "Active" as const,
-      };
-
-      addEmployee(newEmployee);
-      // Log them in immediately
-      const created = employees[employees.length - 1] || newEmployee;
-      setCurrentUser(created);
-      router.push("/dashboard");
     }
   };
 

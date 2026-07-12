@@ -11,13 +11,18 @@ export class AuditsService {
   ) {}
 
   async createCycle(createAuditCycleDto: CreateAuditCycleDto) {
+    const scopeType = createAuditCycleDto.departmentScopeId ? 'Department' : 'All';
+    const scopeId = createAuditCycleDto.departmentScopeId || null;
+
     const [cycle] = await this.db
       .insert(auditCycles)
       .values({
-        ...createAuditCycleDto,
-        startDate: new Date(createAuditCycleDto.startDate),
-        endDate: new Date(createAuditCycleDto.endDate),
-        status: 'Planned',
+        name: createAuditCycleDto.name,
+        scopeType,
+        scopeId,
+        startDate: createAuditCycleDto.startDate,
+        endDate: createAuditCycleDto.endDate,
+        status: 'Open',
       })
       .returning();
     return cycle;
@@ -27,8 +32,11 @@ export class AuditsService {
     const [record] = await this.db
       .insert(auditRecords)
       .values({
-        ...createAuditRecordDto,
-        scannedAt: new Date(),
+        auditCycleId: createAuditRecordDto.auditId,
+        assetId: createAuditRecordDto.assetId,
+        auditorId: createAuditRecordDto.auditorUserId,
+        status: createAuditRecordDto.status,
+        notes: createAuditRecordDto.notes,
       })
       .returning();
     return record;
@@ -38,7 +46,7 @@ export class AuditsService {
     // 1. Mark cycle as closed
     const [updatedCycle] = await this.db
       .update(auditCycles)
-      .set({ status: 'Completed', updatedAt: new Date() })
+      .set({ status: 'Closed' })
       .where(eq(auditCycles.id, id))
       .returning();
 
@@ -48,7 +56,7 @@ export class AuditsService {
     const missingRecords = await this.db
       .select()
       .from(auditRecords)
-      .where(and(eq(auditRecords.auditId, id), eq(auditRecords.status, 'Missing')));
+      .where(and(eq(auditRecords.auditCycleId, id), eq(auditRecords.status, 'Missing')));
 
     // 3. Update those assets to 'Lost'
     if (missingRecords.length > 0) {
