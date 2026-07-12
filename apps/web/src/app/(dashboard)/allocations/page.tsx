@@ -55,7 +55,7 @@ export default function AllocationsPage() {
   const [conflictError, setConflictError] = useState("");
   const [conflictedAssetId, setConflictedAssetId] = useState("");
 
-  const handleAllocateSubmit = (e: React.FormEvent) => {
+  const handleAllocateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setConflictError("");
     setConflictedAssetId("");
@@ -81,7 +81,7 @@ export default function AllocationsPage() {
       return;
     }
 
-    const res = allocateAsset(
+    const res = await allocateAsset(
       allocForm.assetId,
       allocForm.targetType,
       allocForm.targetId,
@@ -100,9 +100,9 @@ export default function AllocationsPage() {
     }
   };
 
-  const handleRequestTransferClick = () => {
+  const handleRequestTransferClick = async () => {
     if (!conflictedAssetId) return;
-    requestTransfer(conflictedAssetId, allocForm.targetType, allocForm.targetId);
+    await requestTransfer(conflictedAssetId, allocForm.targetType, allocForm.targetId);
     // Reset states
     setAllocForm({
       assetId: "",
@@ -125,11 +125,11 @@ export default function AllocationsPage() {
     setShowReturnModal(true);
   };
 
-  const handleReturnSubmit = (e: React.FormEvent) => {
+  const handleReturnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeReturnAlloc) return;
 
-    returnAsset(activeReturnAlloc.id, returnForm.condition, returnForm.notes);
+    await returnAsset(activeReturnAlloc.id, returnForm.condition, returnForm.notes);
     setShowReturnModal(false);
     setActiveReturnAlloc(null);
   };

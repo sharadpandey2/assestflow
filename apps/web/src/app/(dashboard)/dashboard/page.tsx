@@ -112,12 +112,12 @@ export default function DashboardPage() {
     setShowAssetModal(false);
   };
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setModalError("");
     setModalSuccess("");
 
-    const res = createBooking({
+    const res = await createBooking({
       assetId: bookingForm.assetId,
       bookedById: bookingForm.bookedById,
       startTime: bookingForm.startTime,

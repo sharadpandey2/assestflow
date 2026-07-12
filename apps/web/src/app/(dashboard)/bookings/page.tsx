@@ -46,7 +46,7 @@ export default function BookingsPage() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
     setFormSuccess("");
@@ -64,7 +64,7 @@ export default function BookingsPage() {
       return;
     }
 
-    const res = createBooking({
+    const res = await createBooking({
       assetId: bookingForm.assetId,
       bookedById: bookingForm.bookedById,
       bookedForDepartmentId: bookingForm.bookedForDepartmentId || undefined,

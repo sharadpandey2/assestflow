@@ -78,10 +78,10 @@ export default function OrganizationPage() {
   // ----------------------------------------------------
   // Department Actions
   // ----------------------------------------------------
-  const handleDeptSubmit = (e: React.FormEvent) => {
+  const handleDeptSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!deptForm.name) return;
-    addDepartment({
+    await addDepartment({
       name: deptForm.name,
       headId: deptForm.headId || employees[0]?.id || "",
       parentDepartmentId: deptForm.parentDepartmentId || undefined,
@@ -91,8 +91,8 @@ export default function OrganizationPage() {
     setShowDeptModal(false);
   };
 
-  const toggleDeptStatus = (dept: Department) => {
-    editDepartment(dept.id, {
+  const toggleDeptStatus = async (dept: Department) => {
+    await editDepartment(dept.id, {
       status: dept.status === "Active" ? "Inactive" : "Active",
     });
   };
@@ -111,10 +111,10 @@ export default function OrganizationPage() {
     setCustomFields(customFields.filter((_, i) => i !== index));
   };
 
-  const handleCatSubmit = (e: React.FormEvent) => {
+  const handleCatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!catName) return;
-    addCategory({
+    await addCategory({
       name: catName,
       fields: customFields,
     });
@@ -146,8 +146,8 @@ export default function OrganizationPage() {
     });
   };
 
-  const handleRoleChange = (empId: string, role: Role) => {
-    promoteEmployee(empId, role);
+  const handleRoleChange = async (empId: string, role: Role) => {
+    await promoteEmployee(empId, role);
   };
 
   return (

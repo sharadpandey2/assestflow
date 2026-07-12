@@ -144,21 +144,21 @@ interface AppContextType {
   activityLogs: ActivityLog[];
 
   // Actions
-  addDepartment: (dept: Omit<Department, "id">) => void;
-  editDepartment: (id: string, dept: Partial<Department>) => void;
-  addCategory: (cat: Omit<AssetCategory, "id">) => void;
-  editCategory: (id: string, cat: Partial<AssetCategory>) => void;
+  addDepartment: (dept: Omit<Department, "id">) => Promise<void> | void;
+  editDepartment: (id: string, dept: Partial<Department>) => Promise<void> | void;
+  addCategory: (cat: Omit<AssetCategory, "id">) => Promise<void> | void;
+  editCategory: (id: string, cat: Partial<AssetCategory>) => void; // Unchanged as no API exists
   addEmployee: (emp: Omit<Employee, "id">) => void;
   editEmployee: (id: string, emp: Partial<Employee>) => void;
-  promoteEmployee: (id: string, role: Role) => void;
+  promoteEmployee: (id: string, role: Role) => Promise<void> | void;
   registerAsset: (asset: Omit<Asset, "id" | "status">) => void;
   editAsset: (id: string, asset: Partial<Asset>) => void;
-  allocateAsset: (assetId: string, type: "Employee" | "Department", targetId: string, expectedReturnDate?: string) => { success: boolean; error?: string };
-  requestTransfer: (assetId: string, toType: "Employee" | "Department", toId: string) => void;
-  approveTransfer: (transferId: string) => void;
-  rejectTransfer: (transferId: string) => void;
-  returnAsset: (allocationId: string, condition: string, notes: string) => void;
-  createBooking: (booking: Omit<ResourceBooking, "id" | "status">) => { success: boolean; error?: string };
+  allocateAsset: (assetId: string, type: "Employee" | "Department", targetId: string, expectedReturnDate?: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
+  requestTransfer: (assetId: string, toType: "Employee" | "Department", toId: string) => Promise<void> | void;
+  approveTransfer: (transferId: string) => Promise<void> | void;
+  rejectTransfer: (transferId: string) => Promise<void> | void;
+  returnAsset: (allocationId: string, condition: string, notes: string) => Promise<void> | void;
+  createBooking: (booking: Omit<ResourceBooking, "id" | "status">) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   cancelBooking: (bookingId: string) => void;
   raiseMaintenance: (request: Omit<MaintenanceRequest, "id" | "status" | "createdAt">) => void;
   updateMaintenanceStatus: (requestId: string, status: MaintenanceRequest["status"], technician?: string) => void;
@@ -648,7 +648,23 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Department Management
   // ----------------------------------------------------
-  const addDepartment = (dept: Omit<Department, "id">) => {
+  const addDepartment = async (dept: Omit<Department, "id">) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createDepartment({
+          name: dept.name,
+          headId: dept.headId,
+          parentDepartmentId: dept.parentDepartmentId,
+          status: dept.status,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error creating department in backend:", err);
+      }
+    }
+    // Fallback
     const newDept: Department = {
       ...dept,
       id: `dept-${Date.now()}`,
@@ -661,7 +677,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     logActivity("Create Department", `Created department "${newDept.name}"`);
   };
 
-  const editDepartment = (id: string, data: Partial<Department>) => {
+  const editDepartment = async (id: string, data: Partial<Department>) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.updateDepartment(id, data);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error updating department in backend:", err);
+      }
+    }
+    // Fallback
     setDepartments((prev) => {
       const updated = prev.map((d) => (d.id === id ? { ...d, ...data } : d));
       saveState("af_departments", updated);
@@ -673,7 +700,21 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Category Management
   // ----------------------------------------------------
-  const addCategory = (cat: Omit<AssetCategory, "id">) => {
+  const addCategory = async (cat: Omit<AssetCategory, "id">) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createCategory({
+          name: cat.name,
+          customFieldsSchema: cat.fields,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error creating category in backend:", err);
+      }
+    }
+    // Fallback
     const newCat: AssetCategory = {
       ...cat,
       id: `cat-${Date.now()}`,
@@ -720,7 +761,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     logActivity("Edit Employee", `Modified employee settings for ID ${id}`);
   };
 
-  const promoteEmployee = (id: string, role: Role) => {
+  const promoteEmployee = async (id: string, role: Role) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.updateUserRole(id, role);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error updating user role in backend:", err);
+      }
+    }
+    // Fallback
     setEmployees((prev) => {
       const updated = prev.map((e) => (e.id === id ? { ...e, role } : e));
       saveState("af_employees", updated);
@@ -804,12 +856,12 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Allocation & Conflict Logic
   // ----------------------------------------------------
-  const allocateAsset = (
+  const allocateAsset = async (
     assetId: string,
     type: "Employee" | "Department",
     targetId: string,
     expectedReturnDate?: string
-  ): { success: boolean; error?: string } => {
+  ): Promise<{ success: boolean; error?: string }> => {
     const asset = assets.find((a) => a.id === assetId);
     if (!asset) return { success: false, error: "Asset not found." };
 
@@ -831,6 +883,31 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       };
     }
 
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createAllocation({
+          assetId,
+          assigneeType: type === "Employee" ? "User" : "Department",
+          assigneeId: targetId,
+          expectedReturnDate,
+        });
+        await syncWithBackend();
+        
+        const targetName =
+          type === "Employee"
+            ? employees.find((e) => e.id === targetId)?.name
+            : departments.find((d) => d.id === targetId)?.name;
+        logActivity("Asset Allocation", `Allocated ${assetId} (${asset.name}) to ${type} "${targetName}"`);
+        addNotification("Asset Assigned", `Asset ${assetId} has been successfully assigned to ${targetName}.`, "success");
+        return { success: true };
+      } catch (err: any) {
+        console.error("Error creating allocation in backend:", err);
+        return { success: false, error: err.message || "Failed to allocate asset via API." };
+      }
+    }
+
+    // Fallback
     const newAlloc: AssetAllocation = {
       id: `alloc-${Date.now()}`,
       assetId,
@@ -865,10 +942,28 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return { success: true };
   };
 
-  const requestTransfer = (assetId: string, toType: "Employee" | "Department", toId: string) => {
+  const requestTransfer = async (assetId: string, toType: "Employee" | "Department", toId: string) => {
     const activeAlloc = allocations.find((al) => al.assetId === assetId && al.status === "Active");
     if (!activeAlloc) return;
 
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createTransferRequest({
+          assetId,
+          fromType: activeAlloc.allocatedToType,
+          fromId: activeAlloc.targetId,
+          toType,
+          toId,
+        });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error requesting transfer in backend:", err);
+      }
+    }
+
+    // Fallback
     const newReq: TransferRequest = {
       id: `trans-${Date.now()}`,
       assetId,
@@ -892,10 +987,22 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     addNotification("Transfer Request Submitted", `Transfer request submitted for ${assetName}.`, "info");
   };
 
-  const approveTransfer = (transferId: string) => {
+  const approveTransfer = async (transferId: string) => {
     const req = transferRequests.find((t) => t.id === transferId);
     if (!req) return;
 
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.resolveTransferRequest(transferId, 'Approved', currentUser.id);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error approving transfer in backend:", err);
+      }
+    }
+
+    // Fallback
     // Mark request approved
     setTransferRequests((prev) => {
       const updated = prev.map((t) => (t.id === transferId ? { ...t, status: "Approved" as const } : t));
@@ -939,7 +1046,19 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     addNotification("Transfer Approved", `Asset ${assetName} transfer approved and reallocated to ${destName}.`, "success");
   };
 
-  const rejectTransfer = (transferId: string) => {
+  const rejectTransfer = async (transferId: string) => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.resolveTransferRequest(transferId, 'Rejected', currentUser.id);
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error rejecting transfer in backend:", err);
+      }
+    }
+
+    // Fallback
     setTransferRequests((prev) => {
       const updated = prev.map((t) => (t.id === transferId ? { ...t, status: "Rejected" as const } : t));
       saveState("af_transfers", updated);
@@ -948,10 +1067,22 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     logActivity("Transfer Rejected", `Rejected transfer request ${transferId}`);
   };
 
-  const returnAsset = (allocationId: string, condition: string, notes: string) => {
+  const returnAsset = async (allocationId: string, condition: string, notes: string) => {
     const alloc = allocations.find((al) => al.id === allocationId);
     if (!alloc) return;
 
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.updateAllocation(allocationId, { status: 'Returned', conditionOnReturn: condition, returnNotes: notes });
+        await syncWithBackend();
+        return;
+      } catch (err) {
+        console.error("Error returning asset in backend:", err);
+      }
+    }
+
+    // Fallback
     // Terminate allocation
     setAllocations((prev) => {
       const updated = prev.map((al) =>
@@ -987,7 +1118,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ----------------------------------------------------
   // Shared Resource Booking & Overlap Check
   // ----------------------------------------------------
-  const createBooking = (bookingData: Omit<ResourceBooking, "id" | "status">): { success: boolean; error?: string } => {
+  const createBooking = async (bookingData: Omit<ResourceBooking, "id" | "status">): Promise<{ success: boolean; error?: string }> => {
     const start = new Date(bookingData.startTime);
     const end = new Date(bookingData.endTime);
 
@@ -1006,6 +1137,23 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       };
     }
 
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await api.createBooking(bookingData);
+        await syncWithBackend();
+        
+        const resName = assets.find((a) => a.id === bookingData.assetId)?.name || bookingData.assetId;
+        logActivity("Resource Booked", `Booked "${resName}" from ${bookingData.startTime} to ${bookingData.endTime}`);
+        addNotification("Booking Confirmed", `Reservation confirmed for ${resName}.`, "success");
+        return { success: true };
+      } catch (err: any) {
+        console.error("Error creating booking in backend:", err);
+        return { success: false, error: err.message || "Failed to create booking via API." };
+      }
+    }
+
+    // Fallback
     const newBooking: ResourceBooking = {
       ...bookingData,
       id: `book-${Date.now()}`,
