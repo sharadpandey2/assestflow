@@ -1,4 +1,9 @@
-import { Injectable, Inject, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { DATABASE_CONNECTION } from '../database/database.module';
@@ -43,9 +48,8 @@ export class AuthService {
       })
       .returning();
 
-    // Exclude password hash from response
-    const { passwordHash: _, ...result } = newUser;
-    return result;
+    delete newUser.passwordHash;
+    return newUser;
   }
 
   async login(loginDto: LoginDto) {
@@ -68,7 +72,9 @@ export class AuthService {
     }
 
     if (user.status === 'Inactive') {
-      throw new UnauthorizedException('Your account is inactive. Please contact an administrator.');
+      throw new UnauthorizedException(
+        'Your account is inactive. Please contact an administrator.',
+      );
     }
 
     // Generate JWT token
@@ -81,11 +87,11 @@ export class AuthService {
 
     const token = await this.jwtService.signAsync(payload);
 
-    const { passwordHash: _, ...profile } = user;
+    delete user.passwordHash;
 
     return {
       accessToken: token,
-      user: profile,
+      user,
     };
   }
 
@@ -99,7 +105,7 @@ export class AuthService {
       throw new UnauthorizedException('Profile not found');
     }
 
-    const { passwordHash: _, ...profile } = user;
-    return profile;
+    delete user.passwordHash;
+    return user;
   }
 }

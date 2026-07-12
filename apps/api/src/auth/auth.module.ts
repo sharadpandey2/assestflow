@@ -13,7 +13,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'assetflow_super_secret_jwt_key_2026',
+        secret:
+          configService.get<string>('JWT_SECRET') ||
+          'assetflow_super_secret_jwt_key_2026',
         signOptions: { expiresIn: '7d' }, // 7 days token expiration
       }),
     }),

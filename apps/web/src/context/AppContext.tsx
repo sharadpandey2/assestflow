@@ -449,6 +449,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Load from localStorage on mount
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("af_user");
       const storedEmployees = localStorage.getItem("af_employees");
@@ -476,10 +477,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (storedNotifs) setNotifications(JSON.parse(storedNotifs));
       if (storedLogs) setActivityLogs(JSON.parse(storedLogs));
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   // Save changes to localStorage
-  const saveState = (key: string, val: any) => {
+  const saveState = (key: string, val: unknown) => {
     if (typeof window !== "undefined") {
       localStorage.setItem(key, JSON.stringify(val));
     }
@@ -806,7 +808,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setAssets((prev) => {
       const updated = prev.map((a) =>
         a.id === alloc.assetId
-          ? { ...a, status: "Available" as const, condition: condition as any }
+          ? { ...a, status: "Available" as const, condition: condition as "Excellent" | "Good" | "Fair" | "Poor" }
           : a
       );
       saveState("af_assets", updated);

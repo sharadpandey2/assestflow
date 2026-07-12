@@ -1,4 +1,9 @@
-import { Injectable, Inject, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { bookings } from '@asset-flow/database';
 import { eq, and, lt, gt, ne } from 'drizzle-orm';
@@ -6,9 +11,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Injectable()
 export class BookingsService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async createBooking(createBookingDto: CreateBookingDto) {
     const { assetId, startTime, endTime } = createBookingDto;
@@ -25,13 +28,13 @@ export class BookingsService {
           eq(bookings.assetId, assetId),
           ne(bookings.status, 'Cancelled'),
           lt(bookings.startTime, requestedEnd),
-          gt(bookings.endTime, requestedStart)
-        )
+          gt(bookings.endTime, requestedStart),
+        ),
       );
 
     if (overlappingBookings.length > 0) {
       throw new ConflictException(
-        `This asset is already booked during the requested time slot. Please choose another time.`
+        `This asset is already booked during the requested time slot. Please choose another time.`,
       );
     }
 
@@ -49,10 +52,7 @@ export class BookingsService {
   }
 
   async getBookingsForAsset(assetId: string) {
-    return this.db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.assetId, assetId));
+    return this.db.select().from(bookings).where(eq(bookings.assetId, assetId));
   }
 
   async cancelBooking(id: string) {

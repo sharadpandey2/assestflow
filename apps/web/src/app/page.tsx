@@ -27,8 +27,8 @@ export default function LoginPage() {
         setAuthToken(res.accessToken);
         setCurrentUser(res.user);
         router.push("/dashboard");
-      } catch (err: any) {
-        setError(err.message || "Invalid credentials. Please try again.");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Invalid credentials. Please try again.");
       }
     } else {
       if (!name || !email || !password) {
@@ -41,8 +41,8 @@ export default function LoginPage() {
         setAuthToken(res.accessToken);
         setCurrentUser(res.user);
         router.push("/dashboard");
-      } catch (err: any) {
-        setError(err.message || "Signup failed. Email may already be registered.");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Signup failed. Email may already be registered.");
       }
     }
   };

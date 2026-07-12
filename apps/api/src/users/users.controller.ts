@@ -23,14 +23,20 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles('Admin')
   @Patch(':id/role')
-  updateRole(@Param('id') id: string, @Body() updateUserRoleDto: UpdateUserRoleDto) {
+  updateRole(
+    @Param('id') id: string,
+    @Body() updateUserRoleDto: UpdateUserRoleDto,
+  ) {
     return this.usersService.updateRole(id, updateUserRoleDto);
   }
 
   @UseGuards(RolesGuard)
   @Roles('Admin')
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() updateUserStatusDto: UpdateUserStatusDto) {
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateUserStatusDto: UpdateUserStatusDto,
+  ) {
     return this.usersService.updateStatus(id, updateUserStatusDto);
   }
 }

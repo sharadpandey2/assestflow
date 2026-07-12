@@ -6,9 +6,7 @@ import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 
 @Injectable()
 export class MaintenanceService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async create(createMaintenanceDto: CreateMaintenanceDto) {
     const [request] = await this.db
@@ -16,7 +14,7 @@ export class MaintenanceService {
       .values({
         ...createMaintenanceDto,
         status: 'Pending',
-        requestDate: new Date(),
+        createdAt: new Date(),
       })
       .returning();
 
@@ -25,25 +23,35 @@ export class MaintenanceService {
 
   async updateStatus(
     id: string,
-    status: 'Pending' | 'Approved' | 'Rejected' | 'In Progress' | 'Completed' | 'Cancelled',
+    status: 'Pending' | 'Approved' | 'Rejected' | 'In Progress' | 'Resolved',
     resolvedByUserId: string,
   ) {
     const [updatedRequest] = await this.db
       .update(maintenanceRequests)
       .set({
         status,
-        resolvedDate: ['Completed', 'Cancelled', 'Rejected'].includes(status) ? new Date() : undefined,
+        approvedById: resolvedByUserId,
+        resolvedAt: ['Resolved', 'Rejected'].includes(status)
+          ? new Date()
+          : null,
       })
       .where(eq(maintenanceRequests.id, id))
       .returning();
 
-    if (!updatedRequest) throw new NotFoundException('Maintenance request not found');
+    if (!updatedRequest)
+      throw new NotFoundException('Maintenance request not found');
 
     // Business Logic: Auto-update Asset Status based on Maintenance Workflow
     if (status === 'Approved' || status === 'In Progress') {
-      await this.db.update(assets).set({ status: 'Under Maintenance' }).where(eq(assets.id, updatedRequest.assetId));
-    } else if (status === 'Completed') {
-      await this.db.update(assets).set({ status: 'Available' }).where(eq(assets.id, updatedRequest.assetId));
+      await this.db
+        .update(assets)
+        .set({ status: 'Under Maintenance' })
+        .where(eq(assets.id, updatedRequest.assetId));
+    } else if (status === 'Resolved') {
+      await this.db
+        .update(assets)
+        .set({ status: 'Available' })
+        .where(eq(assets.id, updatedRequest.assetId));
     }
 
     return updatedRequest;

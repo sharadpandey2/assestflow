@@ -5,9 +5,7 @@ import { eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class ReportsService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async getDashboardKPIs() {
     // Total Assets
@@ -32,7 +30,7 @@ export class ReportsService {
       .select({ count: sql<number>`count(*)` })
       .from(maintenanceRequests)
       .where(
-        sql`${maintenanceRequests.status} IN ('Pending', 'Approved', 'In Progress')`
+        sql`${maintenanceRequests.status} IN ('Pending', 'Approved', 'In Progress')`,
       );
 
     return {

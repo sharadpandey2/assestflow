@@ -1,6 +1,9 @@
 import { Controller, Post, Body, Patch, Param } from '@nestjs/common';
 import { AllocationsService } from './allocations.service';
-import { CreateAllocationDto, CreateTransferRequestDto } from './dto/create-allocation.dto';
+import {
+  CreateAllocationDto,
+  CreateTransferRequestDto,
+} from './dto/create-allocation.dto';
 
 @Controller('allocations')
 export class AllocationsController {
@@ -22,6 +25,10 @@ export class AllocationsController {
     @Body('status') status: 'Approved' | 'Rejected',
     @Body('resolvedByUserId') resolvedByUserId: string,
   ) {
-    return this.allocationsService.resolveTransferRequest(id, status, resolvedByUserId);
+    return this.allocationsService.resolveTransferRequest(
+      id,
+      status,
+      resolvedByUserId,
+    );
   }
 }

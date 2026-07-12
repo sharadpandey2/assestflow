@@ -6,9 +6,7 @@ import { UpdateUserRoleDto, UpdateUserStatusDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async findAll() {
     return this.db.select().from(users);

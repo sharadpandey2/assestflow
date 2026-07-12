@@ -7,20 +7,21 @@ import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AssetsService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async create(createAssetDto: CreateAssetDto) {
     // Generate a simple unique asset tag (e.g., AF-1234)
     const randomTag = Math.floor(1000 + Math.random() * 9000);
     const assetTag = `AF-${randomTag}`;
 
-    const [newAsset] = await this.db.insert(assets).values({
-      ...createAssetDto,
-      assetTag,
-      acquisitionCost: createAssetDto.acquisitionCost?.toString(), // Drizzle decimal expects string
-    }).returning();
+    const [newAsset] = await this.db
+      .insert(assets)
+      .values({
+        ...createAssetDto,
+        assetTag,
+        acquisitionCost: createAssetDto.acquisitionCost?.toString(), // Drizzle decimal expects string
+      })
+      .returning();
 
     return newAsset;
   }
@@ -73,4 +74,3 @@ export class AssetsService {
     return deletedAsset;
   }
 }
-

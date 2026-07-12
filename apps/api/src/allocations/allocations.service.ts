@@ -1,14 +1,20 @@
-import { Injectable, Inject, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { allocations, assets, transferRequests } from '@asset-flow/database';
-import { eq, and, isNull } from 'drizzle-orm';
-import { CreateAllocationDto, CreateTransferRequestDto } from './dto/create-allocation.dto';
+import { eq, and } from 'drizzle-orm';
+import {
+  CreateAllocationDto,
+  CreateTransferRequestDto,
+} from './dto/create-allocation.dto';
 
 @Injectable()
 export class AllocationsService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async allocateAsset(createAllocationDto: CreateAllocationDto) {
     // 1. Conflict Rule: Check if asset is already allocated and not returned
@@ -18,21 +24,27 @@ export class AllocationsService {
       .where(
         and(
           eq(allocations.assetId, createAllocationDto.assetId),
-          eq(allocations.status, 'Active')
-        )
+          eq(allocations.status, 'Active'),
+        ),
       );
 
     if (existingAllocation.length > 0) {
       throw new ConflictException(
-        `Asset ${createAllocationDto.assetId} is already allocated. Please create a transfer request instead.`
+        `Asset ${createAllocationDto.assetId} is already allocated. Please create a transfer request instead.`,
       );
     }
 
-    const assigneeType = createAllocationDto.assignedUserId ? 'User' : 'Department';
-    const assigneeId = createAllocationDto.assignedUserId || createAllocationDto.assignedDepartmentId;
+    const assigneeType = createAllocationDto.assignedUserId
+      ? 'User'
+      : 'Department';
+    const assigneeId =
+      createAllocationDto.assignedUserId ||
+      createAllocationDto.assignedDepartmentId;
 
     if (!assigneeId) {
-      throw new ConflictException('Assignee ID is required (either assignedUserId or assignedDepartmentId)');
+      throw new ConflictException(
+        'Assignee ID is required (either assignedUserId or assignedDepartmentId)',
+      );
     }
 
     // 2. Insert new allocation
@@ -66,12 +78,14 @@ export class AllocationsService {
       .where(
         and(
           eq(allocations.assetId, createTransferDto.assetId),
-          eq(allocations.status, 'Active')
-        )
+          eq(allocations.status, 'Active'),
+        ),
       );
 
     if (!activeAlloc) {
-      throw new NotFoundException('Asset is not currently allocated. Cannot request a transfer.');
+      throw new NotFoundException(
+        'Asset is not currently allocated. Cannot request a transfer.',
+      );
     }
 
     const [request] = await this.db
@@ -87,7 +101,11 @@ export class AllocationsService {
     return request;
   }
 
-  async resolveTransferRequest(id: string, status: 'Approved' | 'Rejected', resolvedByUserId: string) {
+  async resolveTransferRequest(
+    id: string,
+    status: 'Approved' | 'Rejected',
+    resolvedByUserId: string,
+  ) {
     const [req] = await this.db
       .select()
       .from(transferRequests)
@@ -119,21 +137,19 @@ export class AllocationsService {
         .where(
           and(
             eq(allocations.assetId, req.assetId),
-            eq(allocations.status, 'Active')
-          )
+            eq(allocations.status, 'Active'),
+          ),
         );
 
       // 2. Create new allocation for requester
-      await this.db
-        .insert(allocations)
-        .values({
-          assetId: req.assetId,
-          assigneeType: 'User',
-          assigneeId: req.requesterId,
-          assignedById: resolvedByUserId,
-          status: 'Active',
-          createdAt: new Date(),
-        });
+      await this.db.insert(allocations).values({
+        assetId: req.assetId,
+        assigneeType: 'User',
+        assigneeId: req.requesterId,
+        assignedById: resolvedByUserId,
+        status: 'Active',
+        createdAt: new Date(),
+      });
     }
 
     return updated;

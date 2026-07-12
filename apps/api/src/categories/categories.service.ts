@@ -7,12 +7,13 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const [newCategory] = await this.db.insert(categories).values(createCategoryDto).returning();
+    const [newCategory] = await this.db
+      .insert(categories)
+      .values(createCategoryDto)
+      .returning();
     return newCategory;
   }
 
@@ -21,7 +22,10 @@ export class CategoriesService {
   }
 
   async findOne(id: string) {
-    const [category] = await this.db.select().from(categories).where(eq(categories.id, id));
+    const [category] = await this.db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }

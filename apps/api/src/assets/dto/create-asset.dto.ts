@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber, IsDateString, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsDateString,
+  IsEnum,
+} from 'class-validator';
 
 // For simplicity, we define the enums here or we could import them from the DB package.
 export enum AssetStatus {
@@ -51,7 +59,7 @@ export class CreateAssetDto {
   @IsEnum(AssetStatus)
   @IsOptional()
   status?: AssetStatus;
-  
+
   @IsOptional()
   customAttributes?: any;
 }

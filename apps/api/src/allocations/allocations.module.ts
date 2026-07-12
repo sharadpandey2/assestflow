@@ -4,6 +4,6 @@ import { AllocationsService } from './allocations.service';
 
 @Module({
   controllers: [AllocationsController],
-  providers: [AllocationsService]
+  providers: [AllocationsService],
 })
 export class AllocationsModule {}

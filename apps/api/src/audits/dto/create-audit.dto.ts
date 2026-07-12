@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateAuditCycleDto {
   @IsString()

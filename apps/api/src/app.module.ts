@@ -15,7 +15,20 @@ import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, UsersModule, DepartmentsModule, CategoriesModule, AssetsModule, AllocationsModule, BookingsModule, MaintenanceModule, AuditsModule, ReportsModule, NotificationsModule],
+  imports: [
+    DatabaseModule,
+    AuthModule,
+    UsersModule,
+    DepartmentsModule,
+    CategoriesModule,
+    AssetsModule,
+    AllocationsModule,
+    BookingsModule,
+    MaintenanceModule,
+    AuditsModule,
+    ReportsModule,
+    NotificationsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

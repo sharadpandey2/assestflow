@@ -7,12 +7,13 @@ import { UpdateDepartmentDto } from './dto/update-department.dto';
 
 @Injectable()
 export class DepartmentsService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async create(createDepartmentDto: CreateDepartmentDto) {
-    const [newDept] = await this.db.insert(departments).values(createDepartmentDto).returning();
+    const [newDept] = await this.db
+      .insert(departments)
+      .values(createDepartmentDto)
+      .returning();
     return newDept;
   }
 
@@ -21,7 +22,10 @@ export class DepartmentsService {
   }
 
   async findOne(id: string) {
-    const [dept] = await this.db.select().from(departments).where(eq(departments.id, id));
+    const [dept] = await this.db
+      .select()
+      .from(departments)
+      .where(eq(departments.id, id));
     if (!dept) {
       throw new NotFoundException(`Department with ID ${id} not found`);
     }

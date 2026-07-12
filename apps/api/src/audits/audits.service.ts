@@ -2,16 +2,19 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/database.module';
 import { auditCycles, auditRecords, assets } from '@asset-flow/database';
 import { eq, inArray, and } from 'drizzle-orm';
-import { CreateAuditCycleDto, CreateAuditRecordDto } from './dto/create-audit.dto';
+import {
+  CreateAuditCycleDto,
+  CreateAuditRecordDto,
+} from './dto/create-audit.dto';
 
 @Injectable()
 export class AuditsService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
   async createCycle(createAuditCycleDto: CreateAuditCycleDto) {
-    const scopeType = createAuditCycleDto.departmentScopeId ? 'Department' : 'All';
+    const scopeType = createAuditCycleDto.departmentScopeId
+      ? 'Department'
+      : 'All';
     const scopeId = createAuditCycleDto.departmentScopeId || null;
 
     const [cycle] = await this.db
@@ -56,7 +59,12 @@ export class AuditsService {
     const missingRecords = await this.db
       .select()
       .from(auditRecords)
-      .where(and(eq(auditRecords.auditCycleId, id), eq(auditRecords.status, 'Missing')));
+      .where(
+        and(
+          eq(auditRecords.auditCycleId, id),
+          eq(auditRecords.status, 'Missing'),
+        ),
+      );
 
     // 3. Update those assets to 'Lost'
     if (missingRecords.length > 0) {
@@ -67,6 +75,9 @@ export class AuditsService {
         .where(inArray(assets.id, missingAssetIds));
     }
 
-    return { message: 'Audit cycle closed and missing assets marked as Lost.', updatedCycle };
+    return {
+      message: 'Audit cycle closed and missing assets marked as Lost.',
+      updatedCycle,
+    };
   }
 }

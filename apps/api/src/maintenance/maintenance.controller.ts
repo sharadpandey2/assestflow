@@ -19,7 +19,8 @@ export class MaintenanceController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @Body('status') status: 'Pending' | 'Approved' | 'Rejected' | 'In Progress' | 'Completed' | 'Cancelled',
+    @Body('status')
+    status: 'Pending' | 'Approved' | 'Rejected' | 'In Progress' | 'Resolved',
     @Body('resolvedByUserId') resolvedByUserId: string,
   ) {
     return this.maintenanceService.updateStatus(id, status, resolvedByUserId);

@@ -1,6 +1,9 @@
 import { Controller, Post, Body, Patch, Param } from '@nestjs/common';
 import { AuditsService } from './audits.service';
-import { CreateAuditCycleDto, CreateAuditRecordDto } from './dto/create-audit.dto';
+import {
+  CreateAuditCycleDto,
+  CreateAuditRecordDto,
+} from './dto/create-audit.dto';
 
 @Controller('audits')
 export class AuditsController {
