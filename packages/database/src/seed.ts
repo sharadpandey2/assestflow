@@ -1,5 +1,5 @@
-import { db } from "./db";
-import * as schema from "./schema";
+import { db } from "./db.js";
+import * as schema from "./schema.js";
 import { eq } from "drizzle-orm";
 
 const PASSWORD_HASH = "$2b$10$tJ0.OsgoZg8eg0qEiprcbeLL0kw0oO1nsOYCHZ60Fxlhq3v4x9axq"; // password123
