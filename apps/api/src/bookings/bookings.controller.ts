@@ -6,6 +6,12 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
+  @Get()
+  getAllBookings() {
+    return this.bookingsService.getAllBookings();
+  }
+
+
   @Post()
   createBooking(@Body() createBookingDto: CreateBookingDto) {
     return this.bookingsService.createBooking(createBookingDto);

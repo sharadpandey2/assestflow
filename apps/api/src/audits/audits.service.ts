@@ -11,6 +11,13 @@ import {
 export class AuditsService {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
+  async getAllCycles() {
+    // Basic implementation; AppContext expects au.records so we should fetch it ideally, 
+    // but the frontend handles if it's not present (au.records || {})
+    return this.db.select().from(auditCycles);
+  }
+
+
   async createCycle(createAuditCycleDto: CreateAuditCycleDto) {
     const scopeType = createAuditCycleDto.departmentScopeId
       ? 'Department'

@@ -136,6 +136,7 @@ export default function AllocationsPage() {
 
   // Helper resolvers
   const getAssetName = (id: string) => assets.find((a) => a.id === id)?.name || id;
+  const getAssetTag = (id: string) => assets.find((a) => a.id === id)?.assetTag || id;
   
   const getTargetName = (type: "Employee" | "Department", targetId: string) => {
     if (type === "Employee") {
@@ -208,7 +209,7 @@ export default function AllocationsPage() {
                       return (
                         <tr key={alloc.id} className="hover:bg-white/80 hover:shadow-sm transition-all group">
                           <td className="px-5 py-4">
-                            <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">{alloc.assetId}</span>
+                            <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">{getAssetTag(alloc.assetId)}</span>
                           </td>
                           <td className="px-5 py-4 font-bold text-slate-800 text-sm">{getAssetName(alloc.assetId)}</td>
                           <td className="px-5 py-4">
@@ -284,12 +285,12 @@ export default function AllocationsPage() {
                 ) : (
                   pendingRequests.map((req) => {
                     const requesterName = employees.find((e) => e.id === req.requestedById)?.name || "Unknown";
-                    const isManager = currentUser.role === "Asset Manager" || currentUser.role === "Department Head";
+                    const isManager = currentUser.role === "Admin" || currentUser.role === "Asset Manager" || currentUser.role === "Department Head";
                     return (
                       <div key={req.id} className="p-4 border border-slate-100 rounded-2xl bg-white/80 shadow-sm space-y-3 hover:shadow-md transition-all group">
                         <div className="flex justify-between items-start">
                           <p className="font-bold text-slate-800 text-sm leading-tight">{getAssetName(req.assetId)}</p>
-                          <span className="font-mono text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{req.assetId}</span>
+                          <span className="font-mono text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{getAssetTag(req.assetId)}</span>
                         </div>
                         
                         <div className="flex items-center gap-2 text-xs">

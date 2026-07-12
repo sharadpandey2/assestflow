@@ -342,7 +342,7 @@ export default function DashboardPage() {
                     <p className="text-sm text-slate-800 font-semibold leading-snug">{log.details}</p>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-xs text-blue-600 font-bold">{log.actorName}</p>
-                      <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                      <p className="text-[10px] font-semibold text-slate-400 flex items-center gap-1" suppressHydrationWarning>
                         <Clock className="w-3 h-3" />
                         {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>

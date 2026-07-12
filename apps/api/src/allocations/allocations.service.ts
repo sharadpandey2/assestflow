@@ -16,6 +16,33 @@ import {
 export class AllocationsService {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
+  async getAllocations() {
+    return this.db.select().from(allocations);
+  }
+
+  async updateAllocation(id: string, data: any) {
+    const [updated] = await this.db
+      .update(allocations)
+      .set({
+        status: data.status,
+        conditionOnReturn: data.conditionOnReturn,
+        returnNotes: data.returnNotes,
+        actualReturnDate: data.status === 'Returned' ? new Date().toISOString() : undefined,
+      })
+      .where(eq(allocations.id, id))
+      .returning();
+      
+    if (updated && data.status === 'Returned') {
+      await this.db
+        .update(assets)
+        .set({ status: 'Available' })
+        .where(eq(assets.id, updated.assetId));
+    }
+    
+    return updated;
+  }
+
+
   async allocateAsset(createAllocationDto: CreateAllocationDto) {
     // 1. Conflict Rule: Check if asset is already allocated and not returned
     const existingAllocation = await this.db
@@ -68,6 +95,10 @@ export class AllocationsService {
       .where(eq(assets.id, createAllocationDto.assetId));
 
     return newAllocation;
+  }
+
+  async getTransferRequests() {
+    return this.db.select().from(transferRequests);
   }
 
   async createTransferRequest(createTransferDto: CreateTransferRequestDto) {

@@ -53,13 +53,14 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
+    try {
+      const { email, password } = loginDto;
 
-    // Find user
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()));
+      // Find user
+      const [user] = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.email, email.toLowerCase()));
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -89,10 +90,14 @@ export class AuthService {
 
     delete user.passwordHash;
 
-    return {
-      accessToken: token,
-      user,
-    };
+      return {
+        accessToken: token,
+        user,
+      };
+    } catch (e: any) {
+      console.error("LOGIN ERROR:", e);
+      throw new UnauthorizedException(e.message || "Internal Error");
+    }
   }
 
   async getProfile(userId: string) {

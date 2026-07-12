@@ -13,6 +13,11 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 export class BookingsService {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
+  async getAllBookings() {
+    return this.db.select().from(bookings);
+  }
+
+
   async createBooking(createBookingDto: CreateBookingDto) {
     const { assetId, startTime, endTime } = createBookingDto;
     const requestedStart = new Date(startTime);
@@ -41,7 +46,8 @@ export class BookingsService {
     const [newBooking] = await this.db
       .insert(bookings)
       .values({
-        ...createBookingDto,
+        assetId: createBookingDto.assetId,
+        bookerId: createBookingDto.bookedByUserId,
         startTime: requestedStart,
         endTime: requestedEnd,
         status: 'Upcoming',

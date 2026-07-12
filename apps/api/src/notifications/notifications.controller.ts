@@ -6,6 +6,12 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
+  @Get()
+  getAllNotifications() {
+    return this.notificationsService.getAllNotifications();
+  }
+
+
   @Post()
   create(@Body() createNotificationDto: CreateNotificationDto) {
     return this.notificationsService.create(createNotificationDto);

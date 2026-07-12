@@ -17,7 +17,8 @@ import {
   MapPin,
   Tag,
   DollarSign,
-  Box
+  Box,
+  CheckCircle
 } from "lucide-react";
 
 export default function AssetsPage() {

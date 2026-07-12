@@ -21,6 +21,7 @@ export default function AuditsPage() {
   const {
     currentUser,
     assets,
+    allocations,
     auditCycles,
     employees,
     departments,
@@ -106,11 +107,18 @@ export default function AuditsPage() {
   const getScopedAssets = (cycle: AuditCycle): Asset[] => {
     if (cycle.scopeType === "Global") return assets;
     if (cycle.scopeType === "Department") {
-      // Find employees in that department
       const deptEmpIds = employees.filter((e) => e.departmentId === cycle.scopeValue).map((e) => e.id);
-      // Assets are scoped if allocated to this department or employee in this department
-      // We will match location or allocations
-      return assets.filter((asset) => asset.categoryId !== "cat-4"); // Exclude rooms for simpler demo
+      
+      return assets.filter((asset) => {
+        if (asset.categoryId === "cat-4") return false; // Exclude rooms
+        
+        const alloc = allocations.find(a => a.assetId === asset.id && a.status === "Active");
+        if (alloc) {
+           return (alloc.assigneeType === "User" && deptEmpIds.includes(alloc.assigneeId)) || 
+                  (alloc.assigneeType === "Department" && alloc.assigneeId === cycle.scopeValue);
+        }
+        return false;
+      });
     }
     // Location match
     return assets.filter((asset) => asset.location.toLowerCase().includes(cycle.scopeValue.toLowerCase()));

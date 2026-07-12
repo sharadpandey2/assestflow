@@ -8,6 +8,11 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 export class NotificationsService {
   constructor(@Inject(DATABASE_CONNECTION) private readonly db: any) {}
 
+  async getAllNotifications() {
+    return this.db.select().from(notifications).orderBy(desc(notifications.createdAt));
+  }
+
+
   async create(createNotificationDto: CreateNotificationDto) {
     const [notification] = await this.db
       .insert(notifications)

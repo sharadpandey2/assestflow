@@ -43,8 +43,8 @@ export default function LoginPage() {
     if (viewState === "login") {
       try {
         const res = await api.login(email, password);
-        if (res && res.access_token) {
-          setAuthToken(res.access_token);
+        if (res && (res.accessToken || res.access_token)) {
+          setAuthToken(res.accessToken || res.access_token);
           // Redirect with full page reload so AppContext syncs with backend using the new token
           window.location.href = "/dashboard";
         } else {
@@ -66,8 +66,8 @@ export default function LoginPage() {
         
         // Auto-login after signup
         const loginRes = await api.login(email, password);
-        if (loginRes && loginRes.access_token) {
-          setAuthToken(loginRes.access_token);
+        if (loginRes && (loginRes.accessToken || loginRes.access_token)) {
+          setAuthToken(loginRes.accessToken || loginRes.access_token);
           window.location.href = "/dashboard";
         } else {
           setViewState("login");
@@ -140,10 +140,7 @@ export default function LoginPage() {
     setIsLoading(false);
   };
 
-  const handleQuickLogin = (emp: Employee) => {
-    setCurrentUser(emp);
-    router.push("/dashboard");
-  };
+
 
   return (
     <div className="min-h-screen w-full flex relative overflow-hidden bg-[#0a0a0a]">
@@ -383,27 +380,7 @@ export default function LoginPage() {
               )}
             </div>
 
-            {viewState === "login" && (
-              <div className="mt-10 pt-8 border-t border-white/10">
-                <div className="flex items-center justify-center gap-2 mb-6 text-slate-400">
-                  <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-slate-300">Quick Demo Access</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {employees.slice(0, 4).map((emp) => (
-                    <button
-                      key={emp.id}
-                      onClick={() => handleQuickLogin(emp)}
-                      className="p-4 text-left border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20 rounded-2xl transition-all group relative overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <p className="font-bold text-white text-sm truncate">{emp.name}</p>
-                      <p className="text-[11px] text-blue-300 font-semibold mt-1">{emp.role}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
       </div>

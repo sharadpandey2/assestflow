@@ -39,7 +39,8 @@ export type AssetStatus =
   | "Disposed";
 
 export interface Asset {
-  id: string; // e.g., "AF-0001"
+  id: string; // e.g., internal UUID
+  assetTag?: string; // e.g., "AF-0001"
   name: string;
   categoryId: string;
   serialNumber: string;
@@ -191,6 +192,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
   { id: "emp-6", name: "Amit Kumar", email: "amit.k@assetflow.com", departmentId: "dept-1", role: "Employee", status: "Inactive", password: "password123" },
   { id: "emp-7", name: "Raj Malhotra", email: "raj.m@assetflow.com", departmentId: "dept-1", role: "Employee", status: "Active", password: "password123" },
   { id: "emp-8", name: "Priya Sen", email: "priya.sen@assetflow.com", departmentId: "dept-3", role: "Employee", status: "Active", password: "password123" },
+  { id: "emp-9", name: "Sarah Connor", email: "sarah.connor@assetflow.com", departmentId: "dept-2", role: "Employee", status: "Active", password: "password123" },
 ];
 
 const INITIAL_CATEGORIES: AssetCategory[] = [
@@ -436,6 +438,20 @@ const INITIAL_NOTIFICATIONS: SystemNotification[] = [
   },
 ];
 
+const INITIAL_TRANSFERS: TransferRequest[] = [
+  {
+    id: "trans-1",
+    assetId: "AF-0114",
+    fromType: "Employee",
+    fromId: "emp-2", // Priya Shah
+    toType: "Employee",
+    toId: "emp-9", // Let's pretend Sarah Connor is emp-9, or just any ID
+    requestedById: "emp-1",
+    status: "Pending",
+    createdAt: "2026-07-12T10:00:00Z"
+  }
+];
+
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<Employee>(INITIAL_EMPLOYEES[0]); // Default: Abhinav Tyagi (Admin)
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
@@ -443,7 +459,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [categories, setCategories] = useState<AssetCategory[]>(INITIAL_CATEGORIES);
   const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
   const [allocations, setAllocations] = useState<AssetAllocation[]>(INITIAL_ALLOCATIONS);
-  const [transferRequests, setTransferRequests] = useState<TransferRequest[]>([]);
+  const [transferRequests, setTransferRequests] = useState<TransferRequest[]>(INITIAL_TRANSFERS);
   const [bookings, setBookings] = useState<ResourceBooking[]>(INITIAL_BOOKINGS);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>(INITIAL_MAINTENANCE);
   const [auditCycles, setAuditCycles] = useState<AuditCycle[]>([]);
@@ -461,6 +477,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (backendAssets && Array.isArray(backendAssets)) {
         setAssets(backendAssets.map((a: any) => ({
           id: a.id,
+          assetTag: a.assetTag || a.id,
           name: a.name,
           categoryId: a.categoryId,
           serialNumber: a.serialNumber || "",
@@ -1142,7 +1159,12 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const token = getAuthToken();
     if (token) {
       try {
-        await api.createBooking(bookingData);
+        await api.createBooking({
+          assetId: bookingData.assetId,
+          bookedByUserId: bookingData.bookedById,
+          startTime: bookingData.startTime,
+          endTime: bookingData.endTime,
+        });
         await syncWithBackend();
         
         const resName = assets.find((a) => a.id === bookingData.assetId)?.name || bookingData.assetId;

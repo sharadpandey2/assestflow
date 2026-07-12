@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Get } from '@nestjs/common';
 import { AuditsService } from './audits.service';
 import {
   CreateAuditCycleDto,
@@ -8,6 +8,12 @@ import {
 @Controller('audits')
 export class AuditsController {
   constructor(private readonly auditsService: AuditsService) {}
+
+  @Get()
+  getAllCycles() {
+    return this.auditsService.getAllCycles();
+  }
+
 
   @Post()
   createCycle(@Body() createAuditCycleDto: CreateAuditCycleDto) {

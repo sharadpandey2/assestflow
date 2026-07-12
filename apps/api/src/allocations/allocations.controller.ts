@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Get } from '@nestjs/common';
 import { AllocationsService } from './allocations.service';
 import {
   CreateAllocationDto,
@@ -8,6 +8,17 @@ import {
 @Controller('allocations')
 export class AllocationsController {
   constructor(private readonly allocationsService: AllocationsService) {}
+
+  @Get()
+  getAllocations() {
+    return this.allocationsService.getAllocations();
+  }
+
+  @Patch(':id')
+  updateAllocation(@Param('id') id: string, @Body() data: any) {
+    return this.allocationsService.updateAllocation(id, data);
+  }
+
 
   @Post()
   allocateAsset(@Body() createAllocationDto: CreateAllocationDto) {
