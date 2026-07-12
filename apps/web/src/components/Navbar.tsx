@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="h-20 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 flex items-center justify-between px-8 z-20 shadow-sm shrink-0 transition-all">
+    <header className="h-20 glass border-b border-white/20 sticky top-0 flex items-center justify-between px-8 z-20 shrink-0 transition-all">
       {/* Page Title / Context */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-500">{getPageTitle()}</h2>

@@ -10,7 +10,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-screen overflow-hidden bg-transparent">
       {/* Persistent Sidebar */}
       <Sidebar />
 
