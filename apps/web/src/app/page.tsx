@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp, Employee } from "@/context/AppContext";
 import { api, setAuthToken } from "@/services/api";
-import { Shield, Key, ArrowRight, UserPlus, Users, Sparkles } from "lucide-react";
+import { Shield, Key, ArrowRight, UserPlus, Sparkles, Mail, Lock, User } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setCurrentUser, employees, addEmployee } = useApp();
+  const { setCurrentUser, employees } = useApp();
   const [isLogin, setIsLogin] = useState(true);
   
   // Form states
@@ -16,10 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     if (isLogin) {
       try {
@@ -29,10 +31,12 @@ export default function LoginPage() {
         router.push("/dashboard");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Invalid credentials. Please try again.");
+        setIsLoading(false);
       }
     } else {
       if (!name || !email || !password) {
         setError("Please enter your name, email, and password.");
+        setIsLoading(false);
         return;
       }
       try {
@@ -43,6 +47,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Signup failed. Email may already be registered.");
+        setIsLoading(false);
       }
     }
   };
@@ -53,162 +58,184 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen flex bg-slate-50">
-      {/* Left Banner: Marketing/Promo Panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative items-center justify-center p-16 text-white overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl" />
+    <div className="min-h-screen w-full flex relative overflow-hidden bg-[#0a0a0a]">
+      {/* Animated Background Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+      <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[150px] animate-pulse" style={{ animationDuration: '12s' }} />
+      <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-indigo-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
 
-        <div className="max-w-md space-y-8 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-lg">
+      {/* Left Banner: Marketing/Promo Panel */}
+      <div className="hidden lg:flex lg:w-[55%] relative flex-col justify-center px-24 z-10">
+        <div className="space-y-10 max-w-2xl">
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-500/25">
               AF
             </div>
-            <span className="text-2xl font-bold tracking-tight">AssetFlow</span>
+            <span className="text-xl font-bold tracking-tight text-white">AssetFlow</span>
           </div>
 
-          <div className="space-y-4">
-            <h1 className="text-4xl font-extrabold tracking-tight leading-tight">
-              Enterprise Resource & Asset Management
+          <div className="space-y-6">
+            <h1 className="text-5xl xl:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/50 leading-[1.1]">
+              Elevate Your <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Resource Management</span>
             </h1>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Track lifecycle, reserve rooms and equipment, request repairs, and run audit cycles in a single, secure centralized platform.
+            <p className="text-lg text-slate-400 leading-relaxed max-w-xl font-light">
+              Experience the next generation of asset lifecycle tracking, automated auditing, and intelligent resource allocation.
             </p>
           </div>
 
-          {/* Interactive Feature List */}
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <div className="flex gap-3">
-              <div className="w-5 h-5 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
-                ✓
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-8">
+            {[
+              "Conflict-Free Allocation",
+              "Smart Space Booking",
+              "Predictive Maintenance",
+              "Automated Audits"
+            ].map((feature, i) => (
+              <div key={i} className="flex items-center gap-3 group">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 transition-colors group-hover:bg-blue-500/20 group-hover:border-blue-500/40">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{feature}</span>
               </div>
-              <p className="text-xs text-slate-300">Automatic double-allocation prevention and conflict resolver.</p>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-5 h-5 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
-                ✓
-              </div>
-              <p className="text-xs text-slate-300">Shared resource scheduler with time-slot overlap check.</p>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-5 h-5 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
-                ✓
-              </div>
-              <p className="text-xs text-slate-300">Technician dispatch and workflow-linked maintenance.</p>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Right Panel: Login Form / Profile Chooser */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 py-12 overflow-y-auto">
-        <div className="max-w-md w-full mx-auto space-y-8">
+      {/* Right Panel: Glass Login Form */}
+      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 lg:p-12 z-10">
+        <div className="w-full max-w-[440px] relative">
           
-          {/* Header */}
-          <div>
-            <div className="flex items-center gap-2 lg:hidden mb-6">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-sm">
+          {/* Glass Card */}
+          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl overflow-hidden relative">
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+            
+            {/* Mobile Header */}
+            <div className="flex items-center gap-2 lg:hidden mb-8 justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-500/25">
                 AF
               </div>
-              <span className="text-lg font-bold text-slate-900 tracking-tight">AssetFlow</span>
+              <span className="text-2xl font-bold tracking-tight text-white">AssetFlow</span>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {isLogin ? "Sign in to AssetFlow" : "Create employee account"}
-            </h2>
-            <p className="text-xs text-slate-500 mt-1.5">
-              {isLogin ? "Enter your credentials or choose a quick login below." : "All registrations default to standard Employee permissions."}
-            </p>
-          </div>
 
-          {/* Form */}
-          <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-600 rounded-lg font-medium">
-                {error}
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
+                {isLogin ? "Welcome back" : "Create account"}
+              </h2>
+              <p className="text-sm text-slate-400 font-medium">
+                {isLogin ? "Enter your details to access your workspace." : "Join your organization's workspace."}
+              </p>
+            </div>
+
+            <form onSubmit={handleCredentialsSubmit} className="space-y-5">
+              {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 animate-pulse" />
+                  <p className="text-sm text-red-200 font-medium leading-relaxed">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {!isLogin && (
+                  <div className="space-y-1.5 group">
+                    <label className="text-xs font-semibold text-slate-300 ml-1 uppercase tracking-wider">Full Name</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        placeholder="John Doe"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1.5 group">
+                  <label className="text-xs font-semibold text-slate-300 ml-1 uppercase tracking-wider">Email Address</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      placeholder="admin@assetflow.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 group">
+                  <label className="text-xs font-semibold text-slate-300 ml-1 uppercase tracking-wider">Password</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 focus:bg-white/10 transition-all font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-bold transition-all shadow-[0_0_40px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_0_60px_-10px_rgba(79,70,229,0.7)] hover:-translate-y-0.5 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:hover:translate-y-0"
+              >
+                <span>{isLoading ? "Authenticating..." : isLogin ? "Sign In" : "Create Account"}</span>
+                {!isLoading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-slate-400 hover:text-white transition-colors font-medium inline-flex items-center gap-1.5"
+              >
+                {isLogin ? (
+                  <>No account yet? <span className="text-blue-400">Sign up</span></>
+                ) : (
+                  <>Already have an account? <span className="text-blue-400">Sign in</span></>
+                )}
+              </button>
+            </div>
+
+            {isLogin && (
+              <div className="mt-10 pt-8 border-t border-white/10">
+                <div className="flex items-center justify-center gap-2 mb-6 text-slate-400">
+                  <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-300">Quick Demo Access</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {employees.slice(0, 4).map((emp) => (
+                    <button
+                      key={emp.id}
+                      onClick={() => handleQuickLogin(emp)}
+                      className="p-4 text-left border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20 rounded-2xl transition-all group relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <p className="font-bold text-white text-sm truncate">{emp.name}</p>
+                      <p className="text-[11px] text-blue-300 font-semibold mt-1">{emp.role}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-
-            {!isLogin && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
-              <input
-                type="email"
-                required
-                placeholder="admin@assetflow.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <span>{isLogin ? "Sign In" : "Sign Up"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* Toggle Login/Signup */}
-          <div className="text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-xs text-blue-600 hover:underline font-semibold"
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
           </div>
-
-          {/* Quick Access Simulator Profiles */}
-          {isLogin && (
-            <div className="space-y-3 pt-6 border-t border-slate-200">
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Demo Quick Login Profiles</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {employees.slice(0, 4).map((emp) => (
-                  <button
-                    key={emp.id}
-                    onClick={() => handleQuickLogin(emp)}
-                    className="p-3 text-left border border-slate-200 hover:border-blue-500 hover:bg-blue-50/20 rounded-xl transition-all group"
-                  >
-                    <p className="font-bold text-slate-800 text-xs truncate group-hover:text-blue-600">{emp.name}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5">{emp.role}</p>
-                    <p className="text-[9px] text-slate-400 mt-1 truncate">{emp.email}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
         </div>
       </div>
     </div>

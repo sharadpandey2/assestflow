@@ -46,40 +46,52 @@ async function request(path: string, options: RequestInit = {}) {
 
 export const api = {
   // Auth
-  signup: (name: string, email: string, password: string) => {
-    return request('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password }),
-    });
-  },
-  
-  login: (email: string, password: string) => {
-    return request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-  },
+  signup: (name: string, email: string, password: string) => request('/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) }),
+  login: (email: string, password: string) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  getProfile: () => request('/auth/profile'),
 
-  getProfile: () => {
-    return request('/auth/profile');
-  },
+  // Users
+  getUsers: () => request('/users'),
+  updateUserRole: (id: string, role: string) => request(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  updateUserStatus: (id: string, status: 'Active' | 'Inactive') => request(`/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
-  // Users Management (Admin)
-  getUsers: () => {
-    return request('/users');
-  },
+  // Assets
+  getAssets: () => request('/assets'),
+  getAsset: (id: string) => request(`/assets/${id}`),
+  createAsset: (data: any) => request('/assets', { method: 'POST', body: JSON.stringify(data) }),
+  updateAsset: (id: string, data: any) => request(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
-  updateUserRole: (id: string, role: string) => {
-    return request(`/users/${id}/role`, {
-      method: 'PATCH',
-      body: JSON.stringify({ role }),
-    });
-  },
+  // Allocations
+  getAllocations: () => request('/allocations'),
+  getAllocation: (id: string) => request(`/allocations/${id}`),
+  createAllocation: (data: any) => request('/allocations', { method: 'POST', body: JSON.stringify(data) }),
+  updateAllocation: (id: string, data: any) => request(`/allocations/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
-  updateUserStatus: (id: string, status: 'Active' | 'Inactive') => {
-    return request(`/users/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
-  },
+  // Departments
+  getDepartments: () => request('/departments'),
+  getDepartment: (id: string) => request(`/departments/${id}`),
+  createDepartment: (data: any) => request('/departments', { method: 'POST', body: JSON.stringify(data) }),
+  updateDepartment: (id: string, data: any) => request(`/departments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Categories
+  getCategories: () => request('/categories'),
+  createCategory: (data: any) => request('/categories', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Maintenance
+  getMaintenanceRequests: () => request('/maintenance'),
+  createMaintenanceRequest: (data: any) => request('/maintenance', { method: 'POST', body: JSON.stringify(data) }),
+  updateMaintenanceRequest: (id: string, data: any) => request(`/maintenance/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Audits
+  getAudits: () => request('/audits'),
+  createAudit: (data: any) => request('/audits', { method: 'POST', body: JSON.stringify(data) }),
+  updateAudit: (id: string, data: any) => request(`/audits/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Bookings
+  getBookings: () => request('/bookings'),
+  createBooking: (data: any) => request('/bookings', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Notifications
+  getNotifications: () => request('/notifications'),
+  markNotificationsRead: () => request('/notifications/read-all', { method: 'PATCH' }),
 };
